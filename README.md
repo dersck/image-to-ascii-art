@@ -4,7 +4,7 @@ A browser-based tool for converting images into ASCII art. It lets you control s
 
 ## Preview
 
-![Image to ASCII Art interface](public/images/capture.png)
+![Image to ASCII Art interface](public/images/preview-image-to-ascii-art.png)
 
 ## Features
 
