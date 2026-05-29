@@ -17,6 +17,10 @@ type ColoredChar = {
 }
 
 const DEFAULT_IMAGE_SRC = "/images/original-image.png"
+const PREVIEW_FONT_SIZE = 8
+const EXPORT_SCALE = 4
+const EXPORT_BACKGROUND = "black"
+const ASCII_FONT_FAMILY = "Consolas, 'Courier New', monospace"
 
 export default function AsciiConverter() {
   // Add this at the beginning of the component, right after the imports
@@ -276,33 +280,43 @@ export default function AsciiConverter() {
     return asciiArt.endsWith("\n") ? asciiArt.slice(0, -1).split("\n") : asciiArt.split("\n")
   }
 
-  // Add this function after the adjustColorBrightness function
-  const renderToCanvas = () => {
-    if (!outputCanvasRef.current || !asciiArt || coloredAsciiArt.length === 0) return
+  const renderToCanvas = (
+    targetCanvas = outputCanvasRef.current,
+    options: { scale?: number; applyDisplaySize?: boolean } = {},
+  ) => {
+    if (!targetCanvas || !asciiArt || coloredAsciiArt.length === 0) return false
 
-    const canvas = outputCanvasRef.current
-    const fontSize = 8 // Base font size in pixels
+    const canvas = targetCanvas
+    const scale = options.scale ?? 1
+    const fontSize = PREVIEW_FONT_SIZE
     const lineHeight = fontSize
     const charWidth = fontSize * 0.6 // Approximate width of monospace character
     const lines = getAsciiLines()
     const maxLineLength = Math.max(...lines.map((line) => line.length))
     const maxColoredLineLength = Math.max(...coloredAsciiArt.map((row) => row.length))
+    const logicalWidth = grayscale
+      ? Math.max(1, Math.ceil(maxLineLength * charWidth))
+      : Math.max(1, Math.ceil(maxColoredLineLength * charWidth))
+    const logicalHeight = grayscale
+      ? Math.max(1, Math.ceil(lines.length * lineHeight))
+      : Math.max(1, Math.ceil(coloredAsciiArt.length * lineHeight))
 
-    // Resize canvas to fit the ASCII art
-    if (grayscale) {
-      canvas.width = Math.max(1, Math.ceil(maxLineLength * charWidth))
-      canvas.height = Math.max(1, Math.ceil(lines.length * lineHeight))
-    } else {
-      canvas.width = Math.max(1, Math.ceil(maxColoredLineLength * charWidth))
-      canvas.height = Math.max(1, Math.ceil(coloredAsciiArt.length * lineHeight))
+    canvas.width = Math.max(1, Math.ceil(logicalWidth * scale))
+    canvas.height = Math.max(1, Math.ceil(logicalHeight * scale))
+
+    if (options.applyDisplaySize) {
+      canvas.style.width = `${logicalWidth}px`
+      canvas.style.height = `${logicalHeight}px`
     }
 
     const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    if (!ctx) return false
 
-    ctx.fillStyle = "black"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.font = `${fontSize}px monospace`
+    ctx.scale(scale, scale)
+    ctx.imageSmoothingEnabled = false
+    ctx.fillStyle = EXPORT_BACKGROUND
+    ctx.fillRect(0, 0, logicalWidth, logicalHeight)
+    ctx.font = `${fontSize}px ${ASCII_FONT_FAMILY}`
     ctx.textBaseline = "top"
 
     // Render the ASCII art
@@ -319,12 +333,17 @@ export default function AsciiConverter() {
         })
       })
     }
+
+    return true
   }
 
   // Add this effect to trigger canvas rendering when ASCII art changes
   useEffect(() => {
     if (imageLoaded && !loading && !error) {
-      renderToCanvas()
+      renderToCanvas(outputCanvasRef.current, {
+        scale: Math.max(1, window.devicePixelRatio || 1),
+        applyDisplaySize: true,
+      })
     }
   }, [asciiArt, coloredAsciiArt, grayscale, asciiColor, loading, error, imageLoaded])
 
@@ -464,13 +483,14 @@ export default function AsciiConverter() {
       return
     }
 
-    const canvas = outputCanvasRef.current
-    if (!canvas) {
-      setError("Output canvas not available")
+    const canvas = document.createElement("canvas")
+    const rendered = renderToCanvas(canvas, { scale: EXPORT_SCALE })
+
+    if (!rendered) {
+      setError("Failed to render image")
       return
     }
 
-    renderToCanvas()
     canvas.toBlob((blob) => {
       if (!blob) {
         setError("Failed to create image")
