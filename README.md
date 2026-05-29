@@ -16,6 +16,7 @@ A browser-based tool for converting images into ASCII art. It lets you control s
 - Monochrome mode with customizable ASCII color.
 - Color mode based on the source image palette.
 - Brightness inversion for light or dark source images.
+- Optional transparent background for PNG downloads.
 - Export as `.txt` and `.png`.
 
 ## How It Works
@@ -83,7 +84,7 @@ Replacing that file with another image using the same name will change the initi
 The tool can generate two file types:
 
 - `ascii-art.txt`: plain text ASCII output. Useful for editors, documentation, terminals, or messages.
-- `ascii-art.png`: rendered image output on a black background. It uses the selected ASCII color in monochrome mode or the generated palette in color mode.
+- `ascii-art.png`: rendered image output. By default it uses a black background, but `Transparent PNG` can export it with an alpha channel for compositing over a website or design.
 
 You can also copy the ASCII text directly to the clipboard with the `Copy ASCII Art` button.
 
@@ -169,4 +170,4 @@ components/ui/
 - Uploaded images are not sent to any server.
 - Downloadable rendering uses a separate canvas from the internal processing canvas.
 - Custom ASCII color applies to monochrome mode. In color mode, the output color comes from the source image.
-- PNG output uses a black background to preserve contrast and readability.
+- PNG output uses a black background by default to preserve contrast and readability. Enable `Transparent PNG` when the artwork needs to be layered over an existing web background.

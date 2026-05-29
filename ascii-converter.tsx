@@ -44,6 +44,7 @@ export default function AsciiConverter() {
   const [grayscale, setGrayscale] = useState(true)
   const [charSet, setCharSet] = useState("standard")
   const [asciiColor, setAsciiColor] = useState("#f5f5f4")
+  const [transparentPng, setTransparentPng] = useState(false)
   const [loading, setLoading] = useState(true)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [asciiArt, setAsciiArt] = useState<string>("")
@@ -282,7 +283,7 @@ export default function AsciiConverter() {
 
   const renderToCanvas = (
     targetCanvas = outputCanvasRef.current,
-    options: { scale?: number; applyDisplaySize?: boolean } = {},
+    options: { scale?: number; applyDisplaySize?: boolean; background?: string | null } = {},
   ) => {
     if (!targetCanvas || !asciiArt || coloredAsciiArt.length === 0) return false
 
@@ -314,8 +315,11 @@ export default function AsciiConverter() {
 
     ctx.scale(scale, scale)
     ctx.imageSmoothingEnabled = false
-    ctx.fillStyle = EXPORT_BACKGROUND
-    ctx.fillRect(0, 0, logicalWidth, logicalHeight)
+    const background = options.background === undefined ? EXPORT_BACKGROUND : options.background
+    if (background) {
+      ctx.fillStyle = background
+      ctx.fillRect(0, 0, logicalWidth, logicalHeight)
+    }
     ctx.font = `${fontSize}px ${ASCII_FONT_FAMILY}`
     ctx.textBaseline = "top"
 
@@ -484,7 +488,10 @@ export default function AsciiConverter() {
     }
 
     const canvas = document.createElement("canvas")
-    const rendered = renderToCanvas(canvas, { scale: EXPORT_SCALE })
+    const rendered = renderToCanvas(canvas, {
+      scale: EXPORT_SCALE,
+      background: transparentPng ? null : EXPORT_BACKGROUND,
+    })
 
     if (!rendered) {
       setError("Failed to render image")
@@ -500,7 +507,7 @@ export default function AsciiConverter() {
       const url = URL.createObjectURL(blob)
       const element = document.createElement("a")
       element.href = url
-      element.download = "ascii-art.png"
+      element.download = transparentPng ? "ascii-art-transparent.png" : "ascii-art.png"
       document.body.appendChild(element)
       element.click()
       document.body.removeChild(element)
@@ -691,6 +698,21 @@ export default function AsciiConverter() {
                   </div>
                 </div>
                 {!grayscale && <p className="text-xs text-stone-500">Color mode uses the source image palette.</p>}
+              </div>
+
+              <div className="flex items-start space-x-2 border-t border-stone-700 pt-4">
+                <Switch
+                  id="transparent-png"
+                  checked={transparentPng}
+                  onCheckedChange={setTransparentPng}
+                  className="data-[state=checked]:bg-stone-600"
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="transparent-png" className="text-stone-300">
+                    Transparent PNG
+                  </Label>
+                  <p className="text-xs text-stone-500">Only affects PNG downloads. The editor preview stays black.</p>
+                </div>
               </div>
 
               <div className="hidden">
