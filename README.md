@@ -2,6 +2,10 @@
 
 A browser-based tool for converting images into ASCII art. It lets you control sampling resolution, choose different character sets, invert brightness, generate monochrome or source-color output, customize the ASCII color, and export the result as plain text or a PNG image.
 
+## Preview
+
+![Image to ASCII Art interface](public/images/capture.png)
+
 ## Features
 
 - Real-time image-to-ASCII conversion.
